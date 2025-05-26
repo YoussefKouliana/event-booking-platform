@@ -1,5 +1,16 @@
-# Logs
-logs
+# === Node / Vite (client/) ===
+client/node_modules/
+client/dist/
+client/.env
+client/.vite/
+
+# === .NET Core (server/) ===
+server/bin/
+server/obj/
+server/Migrations/
+
+# === Logs ===
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,18 +18,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# === System Files ===
 .DS_Store
+Thumbs.db
+
+# === VS Code & IDEs ===
+.vscode/
+!.vscode/extensions.json
+.idea/
 *.suo
+*.user
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
+*.sln
