@@ -9,6 +9,10 @@ D:\event-booking-platform\server\bin\Debug\net9.0\server.pdb
 D:\event-booking-platform\server\bin\Debug\net9.0\Azure.Core.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Azure.Identity.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Humanizer.dll
+D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.AspNetCore.Cryptography.Internal.dll
+D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
+D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.AspNetCore.OpenApi.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Bcl.AsyncInterfaces.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Build.Locator.dll
@@ -30,6 +34,8 @@ D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.Configura
 D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.DependencyModel.dll
+D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.Identity.Core.dll
+D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.Identity.Stores.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.Logging.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.Logging.Abstractions.dll
 D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.Options.dll
@@ -150,6 +156,7 @@ D:\event-booking-platform\server\obj\Debug\net9.0\server.AssemblyInfo.cs
 D:\event-booking-platform\server\obj\Debug\net9.0\server.csproj.CoreCompileInputs.cache
 D:\event-booking-platform\server\obj\Debug\net9.0\server.MvcApplicationPartsAssemblyInfo.cs
 D:\event-booking-platform\server\obj\Debug\net9.0\server.MvcApplicationPartsAssemblyInfo.cache
+D:\event-booking-platform\server\obj\Debug\net9.0\server.sourcelink.json
 D:\event-booking-platform\server\obj\Debug\net9.0\scopedcss\bundle\server.styles.css
 D:\event-booking-platform\server\obj\Debug\net9.0\staticwebassets.build.json
 D:\event-booking-platform\server\obj\Debug\net9.0\staticwebassets.development.json
@@ -166,8 +173,3 @@ D:\event-booking-platform\server\obj\Debug\net9.0\refint\server.dll
 D:\event-booking-platform\server\obj\Debug\net9.0\server.pdb
 D:\event-booking-platform\server\obj\Debug\net9.0\server.genruntimeconfig.cache
 D:\event-booking-platform\server\obj\Debug\net9.0\ref\server.dll
-D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.AspNetCore.Cryptography.Internal.dll
-D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
-D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
-D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.Identity.Core.dll
-D:\event-booking-platform\server\bin\Debug\net9.0\Microsoft.Extensions.Identity.Stores.dll

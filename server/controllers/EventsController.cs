@@ -5,8 +5,7 @@ using server.Models;
 
 namespace server.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
+
     public class EventsController : ControllerBase
     {
         private readonly AppDbContext _context;
