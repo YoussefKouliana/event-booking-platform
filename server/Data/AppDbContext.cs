@@ -6,45 +6,129 @@ namespace server.Data
 {
     public class AppDbContext : IdentityDbContext<AppUser>
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options)
-            : base(options)
-        {
-        }
-
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+        
         public DbSet<Event> Events { get; set; }
-        public DbSet<Booking> Bookings { get; set; }
-    
-    protected override void OnModelCreating(ModelBuilder builder)
+        public DbSet<Guest> Guests { get; set; }
+        public DbSet<Rsvp> Rsvps { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<Media> Media { get; set; }
+        public DbSet<Table> Tables { get; set; }
+        public DbSet<Seat> Seats { get; set; }
+        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(builder);
-
-            builder.Entity<Event>().HasData(
-                new Event
-                {
-                    Id = 1,
-                    Title = "Tech Conference 2025",
-                    Description = "A day of inspiring talks from industry leaders.",
-                    Date = new DateTime(2025, 6, 20),
-                    MaxAttendees = 300
-                },
-                new Event
-                {
-                    Id = 2,
-                    Title = "Startup Demo Day",
-                    Description = "Pitch your startup to real investors.",
-                    Date = new DateTime(2025, 7, 15),
-                    MaxAttendees = 150
-                },
-                new Event
-                {
-                    Id = 3,
-                    Title = "React Workshop",
-                    Description = "Hands-on session building modern UIs with React.",
-                    Date = new DateTime(2025, 8, 5),
-                    MaxAttendees = 100
-                }
-            );
+            base.OnModelCreating(modelBuilder);
+            
+            // User configuration
+            modelBuilder.Entity<AppUser>(entity =>
+            {
+                entity.HasIndex(u => u.Email).IsUnique();
+                entity.Property(u => u.Email).IsRequired().HasMaxLength(255);
+            });
+            
+            // Event configuration
+            modelBuilder.Entity<Event>(entity =>
+            {
+                entity.HasIndex(e => e.Slug).IsUnique();
+                entity.HasOne(e => e.User)
+                      .WithMany(u => u.Events)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.Property(e => e.EventDate).IsRequired();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+            
+            // Guest configuration
+            modelBuilder.Entity<Guest>(entity =>
+            {
+                entity.HasIndex(g => g.CustomLink).IsUnique();
+                entity.HasOne(g => g.Event)
+                      .WithMany(e => e.Guests)
+                      .HasForeignKey(g => g.EventId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.Property(g => g.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+            
+            // RSVP configuration
+            modelBuilder.Entity<Rsvp>(entity =>
+            {
+                entity.HasOne(r => r.Guest)
+                      .WithMany(g => g.Rsvps)
+                      .HasForeignKey(r => r.GuestId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.Property(r => r.SubmittedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(r => r.Status).HasDefaultValue("Pending");
+                entity.Property(r => r.PartySize).HasDefaultValue(1);
+            });
+            
+            // Payment configuration
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.HasOne(p => p.User)
+                      .WithMany(u => u.Payments)
+                      .HasForeignKey(p => p.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.Property(p => p.Amount).HasPrecision(18, 2);
+                entity.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(p => p.Status).HasDefaultValue("Pending");
+            });
+            
+            // Media configuration
+            modelBuilder.Entity<Media>(entity =>
+            {
+                entity.HasOne(m => m.Event)
+                      .WithMany(e => e.Media)
+                      .HasForeignKey(m => m.EventId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.Property(m => m.UploadedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(m => m.IsPublic).HasDefaultValue(true);
+            });
+            
+            // Table configuration
+            modelBuilder.Entity<Table>(entity =>
+            {
+                entity.HasOne(t => t.Event)
+                      .WithMany(e => e.Tables)
+                      .HasForeignKey(t => t.EventId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.Property(t => t.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(t => t.IsActive).HasDefaultValue(true);
+            });
+            
+            // Seat configuration
+            modelBuilder.Entity<Seat>(entity =>
+            {
+                entity.HasOne(s => s.Table)
+                      .WithMany(t => t.Seats)
+                      .HasForeignKey(s => s.TableId)
+                      .OnDelete(DeleteBehavior.NoAction); // Changed to NoAction to avoid cascade conflicts
+                
+                entity.HasOne(s => s.Guest)
+                      .WithMany(g => g.Seats)
+                      .HasForeignKey(s => s.GuestId)
+                      .OnDelete(DeleteBehavior.SetNull);
+                
+                entity.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(s => s.IsReserved).HasDefaultValue(false);
+            });
+            
+            // Additional constraints using the new ToTable syntax
+            modelBuilder.Entity<Event>()
+                .ToTable(t => t.HasCheckConstraint("CK_Event_EventDate", "EventDate > GETUTCDATE()"));
+            
+            modelBuilder.Entity<Rsvp>()
+                .ToTable(t => t.HasCheckConstraint("CK_Rsvp_Status", "Status IN ('Pending', 'Attending', 'Declined')"));
+            
+            modelBuilder.Entity<Payment>()
+                .ToTable(t => t.HasCheckConstraint("CK_Payment_Status", "Status IN ('Pending', 'Completed', 'Failed', 'Refunded')"))
+                .ToTable(t => t.HasCheckConstraint("CK_Payment_Amount", "Amount >= 0"));
         }
-
     }
 }

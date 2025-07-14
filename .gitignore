@@ -1,13 +1,33 @@
-# === Node / Vite (client/) ===
+# === Node / Vite (Frontend) ===
+node_modules/
+client-ts/node_modules/
 client/node_modules/
+dist/
+client-ts/dist/
 client/dist/
-client/.env
+dist-ssr/
+client-ts/.vite/
 client/.vite/
+*.local
 
-# === .NET Core (server/) ===
+# === .NET Core (Backend) ===
 server/bin/
 server/obj/
 server/Migrations/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# === Environment Files ===
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+client-ts/.env
+server/appsettings.Development.json
+server/appsettings.Production.json
 
 # === Logs ===
 logs/
@@ -21,14 +41,30 @@ lerna-debug.log*
 # === System Files ===
 .DS_Store
 Thumbs.db
+*.tmp
+*.temp
 
-# === VS Code & IDEs ===
+# === IDEs & Editors ===
 .vscode/
 !.vscode/extensions.json
 .idea/
-*.suo
-*.user
+*.swp
+*.swo
+*~
 *.ntvs*
 *.njsproj
 *.sw?
 *.sln
+
+# === Build Results ===
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+[Bb]in/
+[Oo]bj/
+
+# === Package Managers ===
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
