@@ -5,6 +5,7 @@ using System.Security.Claims;
 using server.Data;
 using server.Models;
 using server.DTOs;
+using server.Services;
 
 namespace server.Controllers
 {
@@ -14,10 +15,78 @@ namespace server.Controllers
     public class EventsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly PackageService _packageService; // 🆕 Add this
 
-        public EventsController(AppDbContext context)
+        public EventsController(AppDbContext context, PackageService packageService) // 🆕 Add parameter
         {
             _context = context;
+            _packageService = packageService; // 🆕 Add this
+        }
+
+        // 🆕 GET: api/events/packages - Get all available packages
+        [HttpGet("packages")]
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<PackageDto>> GetPackages()
+        {
+            var packages = new[]
+            {
+                new { Type = PackageType.Essential, Config = _packageService.GetPackage(PackageType.Essential) },
+                new { Type = PackageType.Professional, Config = _packageService.GetPackage(PackageType.Professional) },
+                new { Type = PackageType.Premium, Config = _packageService.GetPackage(PackageType.Premium) }
+            }
+            .Select(p => new PackageDto
+            {
+                Id = p.Type,
+                Name = p.Config.Name,
+                Price = p.Config.Price,
+                Features = p.Config.Features,
+                MaxGuests = p.Config.MaxGuests,
+                Popular = p.Config.Name == "Professional",
+                IncludedAddOns = p.Config.IncludedAddOns,
+                AvailableAddOns = p.Config.AllowedAddOns.Select(addOnKey => 
+                {
+                    var addOn = _packageService.GetAddOn(addOnKey);
+                    return new AddOnDto
+                    {
+                        Key = addOnKey,
+                        Name = addOn?.Name ?? "",
+                        Price = addOn?.Price ?? 0,
+                        Description = addOn?.Description ?? ""
+                    };
+                }).ToList()
+            });
+
+            return Ok(packages);
+        }
+
+        // 🆕 POST: api/events/calculate-price - Calculate price for selected package + add-ons
+        [HttpPost("calculate-price")]
+        [AllowAnonymous]
+        public ActionResult<PriceBreakdownDto> CalculatePrice([FromBody] PriceCalculationDto dto)
+        {
+            var totalPrice = _packageService.CalculateTotalPrice(dto.PackageType, dto.AddOns);
+            var package = _packageService.GetPackage(dto.PackageType);
+            
+            var breakdown = new PriceBreakdownDto
+            {
+                PackagePrice = package.Price,
+                TotalPrice = totalPrice,
+                IncludedFeatures = package.IncludedAddOns,
+                AddOnPrices = dto.AddOns?.Select(addOnKey => 
+                {
+                    var addOn = _packageService.GetAddOn(addOnKey);
+                    return new AddOnPriceDto
+                    {
+                        Key = addOnKey,
+                        Name = addOn?.Name ?? "",
+                        Price = addOn?.Price ?? 0,
+                        IsIncluded = package.IncludedAddOns.Contains(addOnKey),
+                        Description = addOn?.Description ?? ""
+                    };
+                }).ToList() ?? new List<AddOnPriceDto>()
+            };
+
+            return Ok(breakdown);
         }
 
         // GET: api/events - Get all events for the authenticated user
@@ -44,6 +113,12 @@ namespace server.Controllers
                     EventTypeName = e.EventType.ToString(),
                     Theme = e.Theme,
                     CreatedAt = e.CreatedAt,
+                    // 🆕 Package Information
+                    PackageType = e.PackageType,
+                    PackageName = _packageService.GetPackage(e.PackageType).Name,
+                    IsPaid = e.IsPaid,
+                    PaymentStatus = e.PaymentStatus,
+                    // Stats
                     TotalGuests = e.Guests.Count,
                     ConfirmedRsvps = e.Guests.SelectMany(g => g.Rsvps).Count(r => r.Status == "Attending"),
                     IsUpcoming = e.EventDate > DateTime.UtcNow,
@@ -71,6 +146,7 @@ namespace server.Controllers
                 return NotFound();
 
             var rsvps = eventItem.Guests.SelectMany(g => g.Rsvps).ToList();
+            var package = _packageService.GetPackage(eventItem.PackageType);
 
             var response = new EventResponseDto
             {
@@ -86,10 +162,26 @@ namespace server.Controllers
                 CustomFields = eventItem.CustomFields,
                 CreatedAt = eventItem.CreatedAt,
                 UpdatedAt = eventItem.UpdatedAt,
+                // 🆕 Package Information
+                PackageType = eventItem.PackageType,
+                PackageName = package.Name,
+                PackagePrice = eventItem.PackagePrice,
+                EnabledAddOns = eventItem.AddOnsList,
+                TotalAmount = eventItem.TotalAmount,
+                // 🆕 Payment Information
+                IsPaid = eventItem.IsPaid,
+                PaidAt = eventItem.PaidAt,
+                PaymentStatus = eventItem.PaymentStatus,
+                // Stats
                 TotalGuests = eventItem.Guests.Count,
                 ConfirmedRsvps = rsvps.Count(r => r.Status == "Attending"),
                 PendingRsvps = rsvps.Count(r => r.Status == "Pending"),
-                DeclinedRsvps = rsvps.Count(r => r.Status == "Declined")
+                DeclinedRsvps = rsvps.Count(r => r.Status == "Declined"),
+                // 🆕 Feature Availability
+                CanUseQRCode = eventItem.CanUseFeature("qr-code"),
+                CanUseGuestNotes = eventItem.CanUseFeature("guest-notes"),
+                CanUseTableManagement = eventItem.CanUseFeature("table-management"),
+                MaxGuests = package.MaxGuests
             };
 
             return Ok(response);
@@ -109,6 +201,7 @@ namespace server.Controllers
                 return NotFound();
 
             var rsvps = eventItem.Guests.SelectMany(g => g.Rsvps).ToList();
+            var package = _packageService.GetPackage(eventItem.PackageType);
 
             var response = new EventResponseDto
             {
@@ -124,6 +217,10 @@ namespace server.Controllers
                 CustomFields = eventItem.CustomFields,
                 CreatedAt = eventItem.CreatedAt,
                 UpdatedAt = eventItem.UpdatedAt,
+                // Package info (limited for public)
+                PackageType = eventItem.PackageType,
+                PackageName = package.Name,
+                // Stats
                 TotalGuests = eventItem.Guests.Count,
                 ConfirmedRsvps = rsvps.Count(r => r.Status == "Attending"),
                 PendingRsvps = rsvps.Count(r => r.Status == "Pending"),
@@ -144,6 +241,10 @@ namespace server.Controllers
             // Validate event date is in the future
             if (dto.EventDate <= DateTime.UtcNow)
                 return BadRequest("Event date must be in the future");
+
+            // 🆕 Calculate pricing
+            var totalAmount = _packageService.CalculateTotalPrice(dto.PackageType, dto.SelectedAddOns);
+            var package = _packageService.GetPackage(dto.PackageType);
 
             // Check if slug already exists for this user
             var existingEvent = await _context.Events
@@ -171,7 +272,7 @@ namespace server.Controllers
             var eventItem = new Event
             {
                 UserId = userId,
-                User = user, // Required navigation property
+                User = user,
                 Title = dto.Title,
                 Slug = dto.Slug,
                 EventDate = dto.EventDate,
@@ -180,6 +281,12 @@ namespace server.Controllers
                 EventType = dto.EventType,
                 Theme = dto.Theme,
                 CustomFields = dto.CustomFields,
+                // 🆕 Package Information
+                PackageType = dto.PackageType,
+                PackagePrice = package.Price,
+                AddOnsList = dto.SelectedAddOns ?? new List<string>(),
+                TotalAmount = totalAmount,
+                // Timestamps
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -202,10 +309,24 @@ namespace server.Controllers
                 CustomFields = eventItem.CustomFields,
                 CreatedAt = eventItem.CreatedAt,
                 UpdatedAt = eventItem.UpdatedAt,
+                // 🆕 Package Information
+                PackageType = eventItem.PackageType,
+                PackageName = package.Name,
+                PackagePrice = eventItem.PackagePrice,
+                EnabledAddOns = eventItem.AddOnsList,
+                TotalAmount = eventItem.TotalAmount,
+                IsPaid = eventItem.IsPaid,
+                PaymentStatus = eventItem.PaymentStatus,
+                // Stats
                 TotalGuests = 0,
                 ConfirmedRsvps = 0,
                 PendingRsvps = 0,
-                DeclinedRsvps = 0
+                DeclinedRsvps = 0,
+                // Features
+                CanUseQRCode = eventItem.CanUseFeature("qr-code"),
+                CanUseGuestNotes = eventItem.CanUseFeature("guest-notes"),
+                CanUseTableManagement = eventItem.CanUseFeature("table-management"),
+                MaxGuests = package.MaxGuests
             };
 
             return CreatedAtAction(nameof(GetEvent), new { id = eventItem.Id }, response);
@@ -250,6 +371,22 @@ namespace server.Controllers
             
             if (dto.CustomFields != null)
                 eventItem.CustomFields = dto.CustomFields;
+
+            // 🆕 Update package if provided (for upgrades)
+            if (dto.PackageType.HasValue)
+            {
+                eventItem.PackageType = dto.PackageType.Value;
+                var package = _packageService.GetPackage(dto.PackageType.Value);
+                eventItem.PackagePrice = package.Price;
+                
+                if (dto.SelectedAddOns != null)
+                    eventItem.AddOnsList = dto.SelectedAddOns;
+                
+                eventItem.TotalAmount = _packageService.CalculateTotalPrice(dto.PackageType.Value, eventItem.AddOnsList);
+                // Reset payment status for package changes
+                eventItem.IsPaid = false;
+                eventItem.PaymentStatus = "Pending";
+            }
 
             eventItem.UpdatedAt = DateTime.UtcNow;
 
@@ -307,6 +444,7 @@ namespace server.Controllers
 
             var rsvps = eventItem.Guests.SelectMany(g => g.Rsvps).ToList();
             var totalPartySize = rsvps.Where(r => r.Status == "Attending").Sum(r => r.PartySize);
+            var package = _packageService.GetPackage(eventItem.PackageType);
 
             var stats = new
             {
@@ -320,7 +458,11 @@ namespace server.Controllers
                     Math.Round((double)rsvps.Count(r => r.Status != "Pending") / eventItem.Guests.Count * 100, 1) : 0,
                 TablesSetup = eventItem.Tables.Count,
                 DaysUntilEvent = (int)(eventItem.EventDate - DateTime.UtcNow).TotalDays,
-                IsUpcoming = eventItem.EventDate > DateTime.UtcNow
+                IsUpcoming = eventItem.EventDate > DateTime.UtcNow,
+                // 🆕 Package info
+                PackageName = package.Name,
+                IsGuestLimitExceeded = _packageService.IsGuestLimitExceeded(eventItem.PackageType, eventItem.Guests.Count),
+                MaxGuests = package.MaxGuests
             };
 
             return Ok(stats);

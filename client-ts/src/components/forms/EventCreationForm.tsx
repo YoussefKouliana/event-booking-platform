@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Calendar, 
-  MapPin, 
-  Heart, 
-  Palette, 
   ArrowLeft, 
-  ArrowRight, 
+  ArrowRight,
   Check,
   Baby,
   Cake,
   GraduationCap,
   Gift,
   PartyPopper,
-  Church
+  Church,
+  Heart,
+  Calendar,
+  MapPin,
+  Palette,
+  CreditCard
 } from 'lucide-react';
+import PackageSelector from '../packages/PackageSelector';
 
 export enum EventType {
   Wedding = 1,
@@ -32,6 +34,12 @@ export enum EventType {
   Other = 99
 }
 
+export enum PackageType {
+  Essential = 1,
+  Professional = 2,
+  Premium = 3
+}
+
 interface EventFormData {
   title: string;
   eventType: EventType;
@@ -39,7 +47,9 @@ interface EventFormData {
   location: string;
   description: string;
   theme: string;
-  customFields: Record<string, any>;
+  packageType: PackageType;
+  selectedAddOns: string[];
+  totalPrice: number;
 }
 
 interface EventTypeOption {
@@ -87,11 +97,39 @@ const eventTypeOptions: EventTypeOption[] = [
     color: 'purple'
   },
   {
+    type: EventType.BarMitzvah,
+    label: 'Bar Mitzvah',
+    icon: Gift,
+    description: 'Coming of age celebration',
+    color: 'emerald'
+  },
+  {
+    type: EventType.BatMitzvah,
+    label: 'Bat Mitzvah',
+    icon: Gift,
+    description: 'Coming of age celebration',
+    color: 'emerald'
+  },
+  {
     type: EventType.BirthdayParty,
     label: 'Birthday Party',
     icon: Cake,
     description: 'Birthday celebration',
     color: 'yellow'
+  },
+  {
+    type: EventType.Anniversary,
+    label: 'Anniversary',
+    icon: Heart,
+    description: 'Celebrate your milestone',
+    color: 'rose'
+  },
+  {
+    type: EventType.Graduation,
+    label: 'Graduation',
+    icon: GraduationCap,
+    description: 'Celebrate achievements',
+    color: 'green'
   },
   {
     type: EventType.BabyShower,
@@ -101,11 +139,11 @@ const eventTypeOptions: EventTypeOption[] = [
     color: 'green'
   },
   {
-    type: EventType.Graduation,
-    label: 'Graduation',
-    icon: GraduationCap,
-    description: 'Celebrate achievements',
-    color: 'emerald'
+    type: EventType.BridalShower,
+    label: 'Bridal Shower',
+    icon: Heart,
+    description: 'Pre-wedding celebration',
+    color: 'pink'
   }
 ];
 
@@ -129,7 +167,9 @@ function EventCreationForm() {
     location: '',
     description: '',
     theme: 'rose-gold',
-    customFields: {}
+    packageType: PackageType.Essential,
+    selectedAddOns: [],
+    totalPrice: 49
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -139,12 +179,16 @@ function EventCreationForm() {
 
     if (step === 1) {
       if (!formData.eventType) newErrors.eventType = 'Please select an event type';
+      if (!formData.title.trim()) newErrors.title = 'Event title is required';
     }
     
     if (step === 2) {
-      if (!formData.title.trim()) newErrors.title = 'Event title is required';
       if (!formData.eventDate) newErrors.eventDate = 'Event date is required';
       if (!formData.location.trim()) newErrors.location = 'Location is required';
+    }
+
+    if (step === 3) {
+      if (!formData.packageType) newErrors.packageType = 'Please select a package';
     }
 
     setErrors(newErrors);
@@ -180,8 +224,13 @@ function EventCreationForm() {
         description: formData.description,
         eventType: formData.eventType,
         theme: formData.theme,
-        customFields: JSON.stringify(formData.customFields) // Convert to JSON string
+        customFields: JSON.stringify({}),
+        // 🆕 Package information
+        packageType: formData.packageType,
+        selectedAddOns: formData.selectedAddOns
       };
+
+      console.log('🚀 Sending event data:', eventData);
 
       const response = await fetch('https://localhost:7193/api/events', {
         method: 'POST',
@@ -193,12 +242,30 @@ function EventCreationForm() {
       });
 
       if (response.ok) {
+        const createdEvent = await response.json();
+        console.log('✅ Event created:', createdEvent);
         navigate('/dashboard');
       } else {
-        const error = await response.text();
-        setErrors({ submit: error || 'Failed to create event' });
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
+        
+        let errorMessage = 'Failed to create event';
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.errors) {
+            const validationErrors = Object.values(errorData.errors).flat();
+            errorMessage = validationErrors.join(', ');
+          } else if (errorData.title) {
+            errorMessage = errorData.title;
+          }
+        } catch {
+          errorMessage = errorText || 'Failed to create event';
+        }
+        
+        setErrors({ submit: errorMessage });
       }
     } catch (error) {
+      console.error('🚫 Network error:', error);
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setIsSubmitting(false);
@@ -207,9 +274,10 @@ function EventCreationForm() {
 
   const getStepTitle = (step: number): string => {
     switch (step) {
-      case 1: return 'Choose Event Type';
+      case 1: return 'Event Type & Title';
       case 2: return 'Event Details';
-      case 3: return 'Customize & Review';
+      case 3: return 'Select Package';
+      case 4: return 'Customize & Review';
       default: return '';
     }
   };
@@ -230,7 +298,7 @@ function EventCreationForm() {
               Back to Dashboard
             </button>
             <h1 className="text-2xl font-bold text-gray-900">Create New Event</h1>
-            <div className="w-24"></div> {/* Spacer for centering */}
+            <div className="w-24"></div>
           </div>
         </div>
       </header>
@@ -240,26 +308,26 @@ function EventCreationForm() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">{getStepTitle(currentStep)}</h2>
-            <span className="text-sm text-gray-500">Step {currentStep} of 3</span>
+            <span className="text-sm text-gray-500">Step {currentStep} of 4</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
               className="bg-gradient-to-r from-rose-500 to-pink-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / 3) * 100}%` }}
+              style={{ width: `${(currentStep / 4) * 100}%` }}
             ></div>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border p-8">
-          {/* Step 1: Event Type Selection */}
+          {/* Step 1: Event Type & Title */}
           {currentStep === 1 && (
             <div>
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">What are you celebrating?</h3>
-                <p className="text-gray-600">Choose the type of event you're planning</p>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">What are you celebrating?</h3>
+                <p className="text-gray-600 text-lg">Choose the type of event you're planning</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {eventTypeOptions.map((option) => {
                   const Icon = option.icon;
                   const isSelected = formData.eventType === option.type;
@@ -268,9 +336,9 @@ function EventCreationForm() {
                     <button
                       key={option.type}
                       onClick={() => setFormData({ ...formData, eventType: option.type })}
-                      className={`p-6 rounded-xl border-2 transition-all text-left hover:shadow-md ${
+                      className={`p-6 rounded-xl border-2 transition-all text-left hover:shadow-lg ${
                         isSelected 
-                          ? `border-${option.color}-500 bg-${option.color}-50 ring-2 ring-${option.color}-200` 
+                          ? `border-${option.color}-500 bg-${option.color}-50 ring-2 ring-${option.color}-200 shadow-md` 
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -281,7 +349,7 @@ function EventCreationForm() {
                           isSelected ? `text-${option.color}-600` : 'text-gray-600'
                         }`} />
                       </div>
-                      <h4 className="font-semibold text-gray-900 mb-1">{option.label}</h4>
+                      <h4 className="font-semibold text-gray-900 mb-2 text-lg">{option.label}</h4>
                       <p className="text-sm text-gray-600">{option.description}</p>
                     </button>
                   );
@@ -289,8 +357,25 @@ function EventCreationForm() {
               </div>
 
               {errors.eventType && (
-                <p className="mt-4 text-sm text-red-600">{errors.eventType}</p>
+                <p className="text-center text-sm text-red-600 mb-6">{errors.eventType}</p>
               )}
+
+              {/* Event Title */}
+              <div className="max-w-md mx-auto">
+                <label className="block text-sm font-medium text-gray-700 mb-2 text-center">
+                  Give your {selectedEventType?.label.toLowerCase()} a title
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder={`e.g., "Sarah & John's ${selectedEventType?.label}"`}
+                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent text-center text-lg ${
+                    errors.title ? 'border-red-300' : ''
+                  }`}
+                />
+                {errors.title && <p className="mt-2 text-sm text-red-600 text-center">{errors.title}</p>}
+              </div>
             </div>
           )}
 
@@ -305,23 +390,7 @@ function EventCreationForm() {
                 <p className="text-gray-600">Provide the essential details for your event</p>
               </div>
 
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Event Title *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder={`Enter your ${selectedEventType?.label.toLowerCase()} title`}
-                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent ${
-                      errors.title ? 'border-red-300' : ''
-                    }`}
-                  />
-                  {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
-                </div>
-
+              <div className="max-w-2xl mx-auto space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-2" />
@@ -372,14 +441,45 @@ function EventCreationForm() {
             </div>
           )}
 
-          {/* Step 3: Customize & Review */}
+          {/* Step 3: Package Selection */}
           {currentStep === 3 && (
             <div>
               <div className="text-center mb-8">
-                <div className={`inline-flex p-3 rounded-lg mb-4 bg-${selectedEventType?.color}-100`}>
-                  <Palette className={`w-8 h-8 text-${selectedEventType?.color}-600`} />
+                <div className="inline-flex p-3 rounded-lg mb-4 bg-rose-100">
+                  <CreditCard className="w-8 h-8 text-rose-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Customize Your Theme</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Package</h3>
+                <p className="text-gray-600">Select the perfect plan for your {selectedEventType?.label.toLowerCase()}</p>
+              </div>
+
+              <PackageSelector
+                selectedPackage={formData.packageType}
+                selectedAddOns={formData.selectedAddOns}
+                onPackageChange={(packageType) => 
+                  setFormData({ ...formData, packageType })
+                }
+                onAddOnsChange={(addOns) => 
+                  setFormData({ ...formData, selectedAddOns: addOns })
+                }
+                onPriceChange={(totalPrice) => 
+                  setFormData({ ...formData, totalPrice })
+                }
+              />
+
+              {errors.packageType && (
+                <p className="mt-4 text-sm text-red-600">{errors.packageType}</p>
+              )}
+            </div>
+          )}
+
+          {/* Step 4: Customize & Review */}
+          {currentStep === 4 && (
+            <div>
+              <div className="text-center mb-8">
+                <div className="inline-flex p-3 rounded-lg mb-4 bg-rose-100">
+                  <Palette className="w-8 h-8 text-rose-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Customize & Review</h3>
                 <p className="text-gray-600">Choose colors and review your event details</p>
               </div>
 
@@ -437,6 +537,12 @@ function EventCreationForm() {
                       <span className="font-medium">{formData.location}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span className="text-gray-600">Package:</span>
+                      <span className="font-medium">
+                        {PackageType[formData.packageType]} - ${formData.totalPrice}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-gray-600">Theme:</span>
                       <span className="font-medium">{colorThemes.find(t => t.value === formData.theme)?.name}</span>
                     </div>
@@ -467,7 +573,7 @@ function EventCreationForm() {
               Previous
             </button>
 
-            {currentStep < 3 ? (
+            {currentStep < 4 ? (
               <button
                 onClick={handleNext}
                 className="flex items-center px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-lg font-medium hover:from-rose-600 hover:to-pink-700 transition-colors"
