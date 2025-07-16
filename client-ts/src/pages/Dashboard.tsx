@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Heart, Calendar, Users, LogOut, Plus, MapPin, Clock } from 'lucide-react';
+import { Heart, Calendar, Users, LogOut, Plus, MapPin, Clock, Settings, Eye, ChevronRight } from 'lucide-react';
 
 interface EventListItem {
   id: number;
@@ -57,6 +57,10 @@ function Dashboard() {
 
   const handleCreateEvent = (): void => {
     navigate('/events/create');
+  };
+
+  const handleEventClick = (eventId: number): void => {
+    navigate(`/events/${eventId}`);
   };
 
   const formatEventDate = (dateString: string): string => {
@@ -232,19 +236,28 @@ function Dashboard() {
                   const isUpcoming = event.isUpcoming;
                   
                   return (
-                    <div key={event.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer">
+                    <div 
+                      key={event.id} 
+                      onClick={() => handleEventClick(event.id)}
+                      className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all cursor-pointer hover:border-rose-300 group"
+                    >
                       <div className="flex items-start justify-between mb-4">
                         <div className={`inline-flex px-3 py-1 rounded-full text-xs font-medium bg-${colorClass}-100 text-${colorClass}-700`}>
                           {event.eventTypeName}
                         </div>
-                        {isUpcoming && event.daysUntilEvent <= 30 && (
-                          <div className="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-medium">
-                            {event.daysUntilEvent} days
-                          </div>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          {isUpcoming && event.daysUntilEvent <= 30 && (
+                            <div className="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-medium">
+                              {event.daysUntilEvent} days
+                            </div>
+                          )}
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-rose-500 transition-colors" />
+                        </div>
                       </div>
 
-                      <h4 className="font-semibold text-gray-900 mb-2 text-lg">{event.title}</h4>
+                      <h4 className="font-semibold text-gray-900 mb-2 text-lg group-hover:text-rose-700 transition-colors">
+                        {event.title}
+                      </h4>
                       
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center text-sm text-gray-600">
@@ -264,6 +277,32 @@ function Dashboard() {
                         <div className="text-sm text-gray-600">
                           <span className="font-medium text-green-600">{event.confirmedRsvps}</span> confirmed
                         </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEventClick(event.id);
+                          }}
+                          className="flex items-center text-sm text-rose-600 hover:text-rose-700 font-medium"
+                        >
+                          <Settings className="w-4 h-4 mr-1" />
+                          Setup
+                        </button>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Navigate to public view
+                            window.open(`/invite/${event.slug}`, '_blank');
+                          }}
+                          className="flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Preview
+                        </button>
                       </div>
                     </div>
                   );

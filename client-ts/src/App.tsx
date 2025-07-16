@@ -4,6 +4,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import EventCreationForm from './components/forms/EventCreationForm';
+import EventDetailsPage from '../src/pages/EventsDetailsPage'; 
+import PreviewPage from './pages/PreviewPage'; // Your existing preview
 import './App.css';
 
 function App() {
@@ -15,6 +17,9 @@ function App() {
             {/* Public Routes */}
             <Route path="/auth" element={<AuthPage />} />
             
+            {/* Public Preview Route (for guests) */}
+            <Route path="/preview/:id" element={<PreviewPage />} />
+            
             {/* Protected Routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
@@ -25,6 +30,13 @@ function App() {
             <Route path="/events/create" element={
               <ProtectedRoute>
                 <EventCreationForm />
+              </ProtectedRoute>
+            } />
+            
+            {/* Event Management - Your new EventDetailsPage */}
+            <Route path="/events/:id" element={
+              <ProtectedRoute>
+                <EventDetailsPage />
               </ProtectedRoute>
             } />
             

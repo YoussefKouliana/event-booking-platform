@@ -38,6 +38,28 @@ namespace server.Data
                 
                 entity.Property(e => e.EventDate).IsRequired();
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+                
+                // 🆕 Package and payment configurations
+                entity.Property(e => e.PackageType)
+                      .HasDefaultValue(PackageType.Essential);
+                      
+                entity.Property(e => e.PackagePrice)
+                      .HasColumnType("decimal(18,2)")
+                      .HasDefaultValue(0);
+                      
+                entity.Property(e => e.TotalAmount)
+                      .HasColumnType("decimal(18,2)")
+                      .HasDefaultValue(0);
+                      
+                entity.Property(e => e.EnabledAddOns)
+                      .HasDefaultValue("[]");
+                      
+                entity.Property(e => e.PaymentStatus)
+                      .HasDefaultValue("Pending");
+                      
+                entity.Property(e => e.IsPaid)
+                      .HasDefaultValue(false);
             });
             
             // Guest configuration
@@ -108,7 +130,7 @@ namespace server.Data
                 entity.HasOne(s => s.Table)
                       .WithMany(t => t.Seats)
                       .HasForeignKey(s => s.TableId)
-                      .OnDelete(DeleteBehavior.NoAction); // Changed to NoAction to avoid cascade conflicts
+                      .OnDelete(DeleteBehavior.NoAction);
                 
                 entity.HasOne(s => s.Guest)
                       .WithMany(g => g.Seats)
@@ -119,7 +141,7 @@ namespace server.Data
                 entity.Property(s => s.IsReserved).HasDefaultValue(false);
             });
             
-            // Additional constraints using the new ToTable syntax
+            // Additional constraints
             modelBuilder.Entity<Event>()
                 .ToTable(t => t.HasCheckConstraint("CK_Event_EventDate", "EventDate > GETUTCDATE()"));
             
@@ -129,6 +151,13 @@ namespace server.Data
             modelBuilder.Entity<Payment>()
                 .ToTable(t => t.HasCheckConstraint("CK_Payment_Status", "Status IN ('Pending', 'Completed', 'Failed', 'Refunded')"))
                 .ToTable(t => t.HasCheckConstraint("CK_Payment_Amount", "Amount >= 0"));
+                
+            // 🆕 Event package and payment constraints
+            modelBuilder.Entity<Event>()
+                .ToTable(t => t.HasCheckConstraint("CK_Event_PaymentStatus", 
+                    "PaymentStatus IN ('Pending', 'Completed', 'Failed', 'Refunded')"))
+                .ToTable(t => t.HasCheckConstraint("CK_Event_PackagePrice", "PackagePrice >= 0"))
+                .ToTable(t => t.HasCheckConstraint("CK_Event_TotalAmount", "TotalAmount >= 0"));
         }
     }
 }

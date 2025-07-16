@@ -103,3 +103,57 @@ export interface RegisterFormData {
 export interface ValidationErrors {
   [key: string]: string;
 }
+
+// Add these new types to your existing types file
+
+// Package types
+export interface Package {
+  id: PackageType;
+  name: string;
+  price: number;
+  features: string[];
+  maxGuests?: number;
+  popular?: boolean;
+  availableAddOns: AddOn[];
+  includedAddOns: string[];
+}
+
+export interface AddOn {
+  key: string;
+  name: string;
+  price: number;
+  description: string;
+}
+
+export interface PriceBreakdown {
+  packagePrice: number;
+  addOnPrices: AddOnPrice[];
+  totalPrice: number;
+  includedFeatures: string[];
+}
+
+export interface AddOnPrice {
+  key: string;
+  name: string;
+  price: number;
+  isIncluded: boolean;
+  description: string;
+}
+
+export enum PackageType {
+  Essential = 1,
+  Professional = 2,
+  Premium = 3
+}
+
+// Update your CreateEventDto to include package info
+export interface CreateEventDto {
+  title: string;
+  eventDate: string;
+  location?: string;
+  description?: string;
+  theme?: string;
+  isPublic: boolean;
+  packageType: PackageType;
+  selectedAddOns?: string[];
+}

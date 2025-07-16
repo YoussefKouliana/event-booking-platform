@@ -33,6 +33,9 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 // JWT Service
 builder.Services.AddScoped<JwtService>();
 
+//Packages Service
+builder.Services.AddScoped<PackageService>();
+
 // JWT Auth Setup
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
