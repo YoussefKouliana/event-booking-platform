@@ -1,8 +1,8 @@
-# 🎉 Celebration Manager - Wedding & Event Invitation Platform
+#  Celebration Manager - Wedding & Event Invitation Platform
 
 A modern, full-stack platform for creating beautiful digital invitations for weddings, baptisms, quinceañeras, and other special celebrations.
 
-## ✨ Features
+##  Features
 
 - **Multi-Event Support**: Wedding, Baptism, Quinceañera, Birthday Party, and more
 - **Beautiful Event Creation**: 3-step form with theme customization
@@ -11,7 +11,7 @@ A modern, full-stack platform for creating beautiful digital invitations for wed
 - **Secure Authentication**: JWT-based user authentication
 - **Real-time Updates**: Live event statistics and RSVP tracking
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 ### Frontend
 - **React 19** with TypeScript
@@ -34,7 +34,7 @@ A modern, full-stack platform for creating beautiful digital invitations for wed
 - **npm** package manager
 - **.NET CLI** for backend
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - **Node.js** (v18 or higher)
@@ -91,9 +91,9 @@ celebration-manager/
 └── README.md
 ```
 
-## 🎯 Current Features
+##  Current Features
 
-### ✅ Completed
+###  Completed
 - User authentication (register/login)
 - Event creation with multiple celebration types
 - Protected routing
@@ -102,7 +102,7 @@ celebration-manager/
 - Responsive dashboard
 - Theme customization
 
-### 🚧 In Development
+###  In Development
 - Guest management system
 - RSVP tracking
 - Email notifications
@@ -130,7 +130,7 @@ cd server
 dotnet test
 ```
 
-## 🌟 Event Types Supported
+##  Event Types Supported
 
 - **Weddings** - Complete wedding management
 - **Engagements** - Engagement announcements
@@ -143,11 +143,10 @@ dotnet test
 - **Baby Showers** - Baby welcoming parties
 - **Bridal Showers** - Pre-wedding celebrations
 
-## 📄 License
+##  Copyright notice
+ "Copyright 2025 Youssef Kouliana. All rights reserved."
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -155,10 +154,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📞 Support
+##  Support
 
 If you have any questions or need help, please open an issue on GitHub.
 
 ---
 
-**Built with ❤️ for celebrating life's special moments**
+**Built with LOVE for celebrating life's special moments**
