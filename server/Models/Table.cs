@@ -2,32 +2,24 @@ using System.ComponentModel.DataAnnotations;
 
 namespace server.Models
 {
-    public class Table
+   public class Table
     {
         public int Id { get; set; }
+        public int EventId { get; set; }
+        public required Event Event { get; set; }
         
         [Required]
-        public int EventId { get; set; }
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
         
-        [Required, MaxLength(100)]
-        public string Name { get; set; } = string.Empty; // "Table 1", "VIP Table", "Family Table"
-        
-        [Range(1, 20)]
+        [Range(1, 50)]
         public int Capacity { get; set; }
-        
-        [MaxLength(500)]
-        public string? Description { get; set; }
-        
-        [MaxLength(50)]
-        public string? Shape { get; set; } // Round, Rectangle, Square
         
         public bool IsActive { get; set; } = true;
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
         
-        // Navigation properties
-        public Event Event { get; set; } = null!;
+        // Navigation Properties
         public ICollection<Seat> Seats { get; set; } = new List<Seat>();
     }
 }

@@ -5,39 +5,48 @@ namespace server.Models
     public class Event
     {
         public int Id { get; set; }
-        
-        [Required]
-        public string UserId { get; set; } = string.Empty;
-        
-        [Required, MaxLength(200)]
+        public required string UserId { get; set; }  // Foreign key to AppUser
+        public required AppUser User { get; set; }   // Navigation property
+
+        // Core Event Information (Universal)
         public string Title { get; set; } = string.Empty;
-        
-        [Required, MaxLength(100)]
         public string Slug { get; set; } = string.Empty;
-        
         public DateTime EventDate { get; set; }
-        
-        [MaxLength(500)]
-        public string? Location { get; set; }
-        
-        [MaxLength(1000)]
-        public string? Description { get; set; }
-        
-        [MaxLength(500)]
-        public string? MusicUrl { get; set; }
-        
-        [MaxLength(50)]
-        public string? Theme { get; set; }
-        
-        public bool IsPublic { get; set; } = true;
-        
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
-        
-        // Navigation properties
-        public AppUser User { get; set; } = null!;
+        public string Location { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+
+        // Event Type & Customization
+        public EventType EventType { get; set; }  // Enum: Wedding, Baptism, etc.
+        public string Theme { get; set; } = string.Empty;  // Color theme, style
+        public string MusicUrl { get; set; } = string.Empty;
+
+        // Event-Specific Settings (JSON for flexibility)
+        public string? CustomFields { get; set; }  // JSON for event-specific data
+
+        // Timestamps
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+
+        // Navigation Properties
         public ICollection<Guest> Guests { get; set; } = new List<Guest>();
         public ICollection<Media> Media { get; set; } = new List<Media>();
         public ICollection<Table> Tables { get; set; } = new List<Table>();
+    }
+
+    public enum EventType
+    {
+        Wedding = 1,
+        Engagement = 2,
+        Baptism = 3,
+        FirstCommunion = 4,
+        Quinceañera = 5,
+        BarMitzvah = 6,
+        BatMitzvah = 7,
+        BirthdayParty = 8,
+        Anniversary = 9,
+        Graduation = 10,
+        BabyShower = 11,
+        BridalShower = 12,
+        Other = 99
     }
 }
